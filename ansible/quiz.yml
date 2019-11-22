@@ -1,0 +1,160 @@
+---
+- name: install wordpress
+  hosts: wordpress
+  remote_user: root
+  
+  tasks:
+     - name: install services
+       yum:
+          name:
+             - httpd
+             - mariadb
+             - mariadb-server
+             - php
+             - php-common
+             - php-mysql
+             - php-gd
+             - php-xml
+             - php-mbstring
+             - php-mcrypt
+             - php-xmlrpc
+             - unzip
+             - wget
+          state: present
+
+     - name: start and enabled httpd service
+       service:
+            name: httpd
+            enabled: yes
+            state: started
+     - name: start and enabled mariadb service
+       service:
+            name: mariadb
+            enabled: yes
+            state: started
+
+     - name: open firewall
+       firewalld:
+             service: http
+             state: enabled
+             permanent: yes
+             immediate: yes 
+     - name: install yum install python2-PyMySQL
+       yum:
+           name: python2-PyMySQL
+
+     - name: set mysqladmin password
+       mysql_user:
+#             login_user: root
+#             login_password: abc
+             name: root 
+             password: abc
+             state: present
+
+#     - name: sent script file to server
+#       copy:
+#           src: /home/centos/ansible/sqlscript.sh
+#           dest: sqlscript.sh
+
+     - name: run command
+       become_user: root
+       shell: |
+           echo "DELETE FROM mysql.user WHERE User='';" | mysql -uroot -p"abc";  
+           echo "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');" | mysql -uroot -p"abc";  
+           echo "DROP DATABASE test;" | mysql -uroot -p"abc";  
+           echo "DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';" | mysql -uroot -p"abc";  
+           echo "FLUSH PRIVILEGES;" | mysql -uroot -p"abc";  
+           echo "CREATE DATABASE wordpress" | mysql -uroot -p"abc";  
+           echo "GRANT ALL PRIVILEGES on wordpress.* to 'ansible'@'localhost' identified by 'mypassword';" | mysql -uroot -p"abc";  
+           echo "FLUSH PRIVILEGES;" | mysql -uroot -p"abc";
+
+     - name: download wordpress
+       get_url:
+             url: https://wordpress.org/wordpress-5.0.tar.gz
+             dest: /tmp/wordpress-5.0.tar.gz
+     - name: extract file wordpress
+       unarchive:
+            src: /tmp/wordpress-5.0.tar.gz
+            dest: /var/www/html
+            remote_src: yes
+     - name: change owner, group and permission
+       file:
+            path: /var/www/html/wordpress
+            owner: apache
+            group: apache
+            mode: '0755'
+     - name: create directory
+       file:
+            path: /var/www/html/wordpress/wp-content/uploads
+            state: directory
+            group: apache
+     - name: rename file
+       copy: 
+            src: /var/www/html/wordpress/wp-config-sample.php
+            dest: /var/www/html/wordpress/wp-config.php
+            remote_src: yes
+     - name: remove old file
+       file:
+            path: /var/www/html/wordpress/wp-config-sample.php
+            state: absent
+     - name: write file
+       lineinfile:
+            path: /var/www/html/wordpress/wp-config.php
+            line: |
+                // ** MySQL settings - You can get this info from your web host ** //  
+ 
+                /** The name of the database for WordPress */
+                define('DB_NAME', 'wordpress');
+                /** MySQL database username */
+                define('DB_USER', 'ansible');
+                /** MySQL database password */
+                define('DB_PASSWORD', 'mypassword');
+                /** MySQL hostname */
+                define('DB_HOST', 'localhost');
+...
+ 
+#     - name: write file line1
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: // ** MySQL settings - You can get this info from your web host ** //
+#     - name: write file line2
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: ""
+#     - name: write file line3
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: "/** The name of the database for WordPress */"
+#     - name: write file line4
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: "define('DB_NAME', 'wordpress');"
+#     - name: write file line5
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: "/** MySQL database username */"
+#     - name: write file line6
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: "define('DB_USER', 'ansible');"
+#     - name: write file line7
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: "/** MySQL database password */"
+#     - name: write file line8
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: "define('DB_PASSWORD', 'mypassword');"
+#     - name: write file line9
+#       lineinfile:
+#            path: /var/www/html/wordpress/wp-config.php
+#             line: "/** MySQL hostname */"
+#     - name: write file line10
+#       lineinfile:
+#             path: /var/www/html/wordpress/wp-config.php
+#             line: "define('DB_HOST', 'localhost');"
+
+
+
+
+
