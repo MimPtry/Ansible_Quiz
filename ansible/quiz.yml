@@ -38,23 +38,17 @@
              service: http
              state: enabled
              permanent: yes
-             immediate: yes 
+             immediate: yes
+ 
      - name: install yum install python2-PyMySQL
        yum:
            name: python2-PyMySQL
 
      - name: set mysqladmin password
        mysql_user:
-#             login_user: root
-#             login_password: abc
              name: root 
              password: abc
              state: present
-
-#     - name: sent script file to server
-#       copy:
-#           src: /home/centos/ansible/sqlscript.sh
-#           dest: sqlscript.sh
 
      - name: run command
        become_user: root
