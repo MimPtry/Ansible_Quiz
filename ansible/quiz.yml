@@ -46,9 +46,13 @@
 
      - name: set mysqladmin password
        mysql_user:
-             name: root 
-             password: abc
+             name: "{{ item.name }}"
+             password: "{{ item.password }}"
              state: present
+       ignore_errors: yes
+       loop:
+            - { name: root, password: abc }
+            - { name: root, password: abc }
 
      - name: run command
        become_user: root
@@ -94,61 +98,14 @@
      - name: write file
        lineinfile:
             path: /var/www/html/wordpress/wp-config.php
-            line: |
-                // ** MySQL settings - You can get this info from your web host ** //  
- 
-                /** The name of the database for WordPress */
-                define('DB_NAME', 'wordpress');
-                /** MySQL database username */
-                define('DB_USER', 'ansible');
-                /** MySQL database password */
-                define('DB_PASSWORD', 'mypassword');
-                /** MySQL hostname */
-                define('DB_HOST', 'localhost');
+            regexp: "{{ item.regexp }}"
+            line: "{{ item.line }}"
+       loop:
+            - { regexp: ^define\('DB_NAME', line: "define('DB_NAME', 'wordpress');" } 
+            - { regexp: ^define\('DB_USER', line: "define('DB_USER', 'root');" } 
+            - { regexp: ^define\('DB_PASSWORD', line: "define('DB_PASSWORD', 'abc');" } 
+            - { regexp: ^define\('DB_HOST', line: "define('DB_HOST', 'localhost');" }
 ...
- 
-#     - name: write file line1
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: // ** MySQL settings - You can get this info from your web host ** //
-#     - name: write file line2
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: ""
-#     - name: write file line3
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: "/** The name of the database for WordPress */"
-#     - name: write file line4
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: "define('DB_NAME', 'wordpress');"
-#     - name: write file line5
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: "/** MySQL database username */"
-#     - name: write file line6
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: "define('DB_USER', 'ansible');"
-#     - name: write file line7
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: "/** MySQL database password */"
-#     - name: write file line8
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: "define('DB_PASSWORD', 'mypassword');"
-#     - name: write file line9
-#       lineinfile:
-#            path: /var/www/html/wordpress/wp-config.php
-#             line: "/** MySQL hostname */"
-#     - name: write file line10
-#       lineinfile:
-#             path: /var/www/html/wordpress/wp-config.php
-#             line: "define('DB_HOST', 'localhost');"
-
-
 
 
 
